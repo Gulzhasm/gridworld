@@ -11,7 +11,7 @@ class GridWorld(Environment):
     - Goal state at position (0, 3) -> gives reward +1
     - Trap state at position (1, 3) -> gives reward -1
     
-    Actions: 0=UP, 1=DOWN, 2=LEFT, 3=RIGHT
+    Actions: (1=UP, 2=DOWN, 3=LEFT, 4=RIGHT)
     """
     
     def __init__(self, max_steps=100, seed=None):
