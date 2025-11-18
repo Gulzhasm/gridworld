@@ -1,14 +1,56 @@
-# Reinforcement Learning Environments
+# Reinforcement Learning: Policy and Value Iteration
 
-Implementation of reinforcement learning environments for the Statistical Planning and Reinforcement Learning course exercises.
+Implementation of reinforcement learning algorithms and environments for the Statistical Planning and Reinforcement Learning course exercises.
 
 ## Files
 
-- `environment.py` - Base classes (`EnvironmentModel` and `Environment`) following the specified interface
+### Core Algorithms
+- `policy_evaluation.py` - Policy evaluation, improvement, policy iteration, and value iteration algorithms
+
+### Environments
+- `environment.py` - Base classes (`MDPEnvironmentModel` and `SimulatedMDPEnvironment`) for MDP environments
 - `gridworld.py` - Grid World environment (3×4 grid with goal, trap, and wall)
-- `cliff_walking.py` - Cliff Walking environment (4×12 grid)
-- `interactive.py` - Interactive script to play Grid World
-- `test_environments.py` - Test suite for the environments
+
+### Tests
+- `test_policy_evaluation.py` - Test policy evaluation algorithm
+- `test_all_algorithms.py` - Test policy evaluation, improvement, and policy iteration
+- `test_value_iteration.py` - Compare value iteration vs policy iteration
+
+## Algorithms
+
+### Policy Evaluation
+Computes the value function V^π for a given deterministic policy using the Bellman equation:
+```
+V(s) = Σ_s' P(s'|s,a)[R(s,a,s') + γV(s')]
+```
+where a = π(s) is the action prescribed by the policy.
+
+**Function**: `evaluate_policy(env, policy, gamma, theta, max_iterations)`
+
+### Policy Improvement
+Improves a policy by selecting actions that maximize the Q-value:
+```
+π'(s) = arg max_a Σ_s' P(s'|s,a)[R(s,a,s') + γV(s')]
+```
+
+**Function**: `improve_policy(env, policy, value, gamma)`
+
+### Policy Iteration
+Combines policy evaluation and improvement until convergence:
+1. Evaluate current policy to get value function
+2. Improve policy based on value function
+3. Repeat until policy stabilizes
+
+**Function**: `compute_policy_iteration(env, gamma, theta, max_iterations)`
+
+### Value Iteration
+Directly computes optimal value function using Bellman optimality equation:
+```
+V(s) = max_a Σ_s' P(s'|s,a)[R(s,a,s') + γV(s')]
+```
+Then extracts optimal policy from converged values.
+
+**Function**: `compute_value_iteration(env, gamma, theta, max_iterations)`
 
 ## Grid World Environment
 
@@ -38,80 +80,73 @@ Grid visualization:
 [   ][   ][ A ][   ]
 ```
 
-## Cliff Walking Environment
-
-A 4×12 grid where:
-- **Start**: Bottom-left corner (3,0)
-- **Goal**: Bottom-right corner (3,11)
-- **Cliff**: Bottom row positions (3,1) through (3,10) - falling gives -100 reward and returns to start
-- **Step cost**: -1 reward per step (encourages shorter paths)
-- **Actions**: 0=UP, 1=DOWN, 2=LEFT, 3=RIGHT
-
 ## Usage
 
 ### Running Tests
 
 ```bash
-python test_environments.py
+# Test policy evaluation
+python3 test_policy_evaluation.py
+
+# Test all algorithms (evaluation, improvement, policy iteration)
+python3 test_all_algorithms.py
+
+# Compare value iteration vs policy iteration
+python3 test_value_iteration.py
 ```
 
-### Playing Grid World Interactively
-
-```bash
-python interactive.py
-```
-
-Controls:
-- `1` - Move UP
-- `2` - Move DOWN
-- `3` - Move LEFT
-- `4` - Move RIGHT
-
-### Playing Cliff Walking Interactively
-
-```bash
-python cliff_walking.py
-```
-
-Same controls as Grid World.
-
-### Using in Code
+### Using Algorithms in Code
 
 ```python
-from gridworld import GridWorld
+from gridworld import GridWorldEnvironment
+from policy_evaluation import evaluate_policy, improve_policy, compute_policy_iteration, compute_value_iteration
 
 # Create environment
-env = GridWorld(max_steps=100, seed=42)
+env = GridWorldEnvironment(max_steps=100, seed=42)
 
-# Reset environment
-state = env.reset()
-env.render()
+# Parameters
+gamma = 0.9  # Discount factor
+theta = 1e-6  # Convergence tolerance
+max_iterations = 1000
 
-# Take actions
-state, reward, done = env.step(action)
+# Policy Iteration
+optimal_policy, optimal_value = compute_policy_iteration(env, gamma, theta, max_iterations)
 
-# Access transition probabilities
-prob = env.p(next_state, state, action)
+# Value Iteration
+optimal_policy, optimal_value = compute_value_iteration(env, gamma, theta, max_iterations)
 
-# Access rewards
-reward = env.r(next_state, state, action)
+# Manual policy evaluation
+import numpy as np
+policy = np.array([3, 3, 3, 0, 3, 0, 0, 0, 0, 0, 0, 0])
+value = evaluate_policy(env, policy, gamma, theta, max_iterations)
+
+# Policy improvement
+improved_policy = improve_policy(env, policy, value, gamma)
 ```
 
 ## Interface Compliance
 
-Both environments implement the required interface:
+Environments implement the MDP interface:
 
-### EnvironmentModel
+### MDPEnvironmentModel
 - `__init__(n_states, n_actions, seed)` - Constructor
-- `p(next_state, state, action)` - Transition probability
-- `r(next_state, state, action)` - Expected reward
+- `p(next_state, state, action)` - Transition probability P(s'|s,a)
+- `r(next_state, state, action)` - Reward R(s,a,s')
 - `draw(state, action)` - Sample next state and reward
 
-### Environment (extends EnvironmentModel)
+### SimulatedMDPEnvironment (extends MDPEnvironmentModel)
 - `__init__(n_states, n_actions, max_steps, dist, seed)` - Constructor
 - `reset()` - Reset environment and return initial state
 - `step(action)` - Take action and return (next_state, reward, done)
-- `render()` - Display current state (custom addition)
+
+## Algorithm Comparison
+
+| Algorithm | Approach | Convergence | Use Case |
+|-----------|----------|-------------|----------|
+| Policy Iteration | Evaluate then improve | Guaranteed | When policy changes are infrequent |
+| Value Iteration | Direct value optimization | Guaranteed | When you want optimal values directly |
+
+Both algorithms converge to the same optimal policy and value function.
 
 ## Requirements
 
@@ -121,7 +156,6 @@ Both environments implement the required interface:
 ## Notes
 
 - States and actions are represented as integers starting from 0
-- Transitions are deterministic in both environments
-- The Grid World follows the exact specification from the lecture
-- Cliff Walking is an additional environment for practice
-# gridworld
+- Transitions are deterministic in the Grid World
+- All algorithms use in-place updates for efficiency
+- Discount factor γ controls how much future rewards matter (0 = myopic, 1 = far-sighted)
