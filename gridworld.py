@@ -2,7 +2,7 @@ import numpy as np
 from environment import SimulatedMDPEnvironment
 
 
-class GridWorldEnvironment(SimulatedMDPEnvironment):
+class GridWorld(SimulatedMDPEnvironment):
     """
     Grid world environment (3x4 grid):
     - 11 regular states (positions in grid)

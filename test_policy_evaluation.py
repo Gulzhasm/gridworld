@@ -1,11 +1,11 @@
 import numpy as np
-from gridworld import GridWorldEnvironment
+from gridworld import GridWorld
 from policy_evaluation import evaluate_policy
 
 
 def main():
     # Create grid world environment
-    env = GridWorldEnvironment(max_steps=100, seed=42)
+    env = GridWorld(max_steps=100, seed=42)
     
     print("Grid World Environment:")
     print(f"- States: {env.n_states} (0-10: grid positions, 11: absorbing state)")
